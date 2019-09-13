@@ -1,55 +1,64 @@
 import React, { useState, createRef } from "react";
 import { compose, withProps, withHandlers } from "recompose";
-import { withScriptjs, withGoogleMap, GoogleMap } from "react-google-maps";
+import { withGoogleMap, GoogleMap } from "react-google-maps";
 import { DrawingManager } from "react-google-maps/lib/components/drawing/DrawingManager";
 import "./Map.scss";
 
+const drawingOptions = {
+  drawingControl: false,
+  rectangleOptions: {
+    fillColor: "transparent",
+    strokeColor: "#ed4e79",
+    fillOpacity: 1,
+    strokeWeight: 5,
+    clickable: true,
+    editable: true,
+    zIndex: 1
+  }
+}
+
 const Map = compose(
   withProps({
-    googleMapURL:
-      "https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=geometry,drawing,places",
-    loadingElement: <div style={{ height: `100%` }} />,
-    containerElement: <div style={{ height: `400px` }} />,
-    mapElement: <div style={{ height: `100%` }} />
+    loadingElement: <div className="map-loading" />,
+    containerElement: <div className="map-container" />,
+    mapElement: <div className="map-element" />
   }),
-  withScriptjs,
-  withGoogleMap
-)((...props) => {
-  const map = createRef();
-  const [drawMode, changeMode] = useState(true);
-  const reactangleIsAdded = () => {
-    changeMode(false);
-    getDrawedOverlay();
-  };
+  withHandlers(() => {
+    const refs = {
+      map: undefined,
+    }
 
-  const getDrawedOverlay = () => {
-    console.log(props.getRef);
-  };
+    return {
+      onMapMounted: () => ref => {
+        refs.map = ref
+      },
+      reactangleIsAdded: (...t) => (...a) => {
+        console.log(t)
+        console.log(a)
+        console.log(refs.map)
+      }
+    }
+  }),
+  withGoogleMap
+)(({
+  onMapMounted,
+  reactangleIsAdded
+}) => {
+
+  const [drawMode, changeMode] = useState(true);
 
   return (
     <div className="map-wrp">
-      <button onClick={getDrawedOverlay}>asdasd</button>
-      <GoogleMap defaultZoom={8} defaultCenter={{ lat: -34.397, lng: 150.644 }}>
-        {drawMode && (
-          <DrawingManager
-            defaultDrawingMode={"rectangle"}
-            onRectangleComplete={reactangleIsAdded}
-            defaultOptions={{
-              drawingControl: false,
-              rectangleOptions: {
-                fillColor: "transparent",
-                strokeColor: "#ed4e79",
-                fillOpacity: 1,
-                strokeWeight: 5,
-                clickable: true,
-                editable: true,
-                zIndex: 1
-              }
-            }}
-          />
-        )}
+      <GoogleMap defaultZoom={8} defaultCenter={{ lat: -34.397, lng: 150.644 }}
+        ref={onMapMounted}>
+        <DrawingManager
+          drawingMode={drawMode ? "rectangle" : null}
+          onRectangleComplete={reactangleIsAdded}
+          defaultOptions={drawingOptions}
+        />
+
       </GoogleMap>
-    </div>
+    </div >
   );
 });
 export default Map;
